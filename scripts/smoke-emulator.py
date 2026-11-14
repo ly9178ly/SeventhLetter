@@ -75,8 +75,21 @@ def button_enabled(text):
 
 
 def shot(name):
-    run('shell', 'uitest', 'screenCap', '-p', '/data/local/tmp/seventh-smoke.png')
-    run('file', 'recv', '/data/local/tmp/seventh-smoke.png', str(shots / (name + '.png')))
+    # Layout becomes available before the first rendered frame. Allow rendering to settle.
+    time.sleep(0.6)
+    device_path = '/data/local/tmp/seventh-' + name + '.png'
+    destination = shots / (name + '.png')
+    for _ in range(6):
+        run('shell', 'uitest', 'screenCap', '-p', device_path)
+        run('file', 'recv', device_path, str(destination))
+        if not args.record:
+            return
+        from PIL import Image
+        with Image.open(destination) as frame:
+            if frame.convert('RGB').getbbox() is not None:
+                return
+        time.sleep(0.5)
+    raise AssertionError('Emulator returned only black frames for ' + name)
 
 
 def passed(name):

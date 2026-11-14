@@ -1,0 +1,52 @@
+{
+  "at": "2026-11-14T04:52:33.924153+00:00",
+  "device": "Huawei_Phone API 17",
+  "mechanism": "hdc + uitest + force-stop/relaunch; native Preferences",
+  "results": [
+    {
+      "test": "主页可新开调查并进入原生叙事页面",
+      "result": "PASS"
+    },
+    {
+      "test": "未取得第一封信时关键提问锁定",
+      "result": "PASS"
+    },
+    {
+      "test": "获得第一封信后提问解锁",
+      "result": "PASS"
+    },
+    {
+      "test": "重复调查不会重复增加线索",
+      "result": "PASS"
+    },
+    {
+      "test": "证据档案可展开实际收集到的信件全文",
+      "result": "PASS"
+    },
+    {
+      "test": "强制结束进程后恢复剧情节点与证据",
+      "result": "PASS"
+    },
+    {
+      "test": "四项证据支持事实推理并到达第一章结尾",
+      "result": "PASS"
+    },
+    {
+      "test": "手动保存提供明确成功反馈",
+      "result": "PASS"
+    },
+    {
+      "test": "真实选择写入调查记录",
+      "result": "PASS"
+    },
+    {
+      "test": "取消重开保留原存档",
+      "result": "PASS"
+    }
+  ],
+  "recording": {
+    "frames": 57,
+    "errors": [],
+    "format": "GIF, low frame rate, real-time captures"
+  }
+}
