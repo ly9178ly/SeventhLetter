@@ -1,0 +1,27 @@
+[
+  {
+    "File": "EntryAbility.ets",
+    "Lines": 0,
+    "Branches": 0
+  },
+  {
+    "File": "EntryBackupAbility.ets",
+    "Lines": 0,
+    "Branches": 0
+  },
+  {
+    "File": "StoryEngine.ets",
+    "Lines": 98.6,
+    "Branches": 87.5
+  },
+  {
+    "File": "SaveRepository.ets",
+    "Lines": 92.3,
+    "Branches": 100
+  },
+  {
+    "File": "ChapterOne.ets",
+    "Lines": 100,
+    "Branches": 0
+  }
+]

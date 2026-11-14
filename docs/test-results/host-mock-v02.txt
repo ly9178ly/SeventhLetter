@@ -1,0 +1,32 @@
+PASS new investigation has no evidence and independent arrays
+PASS locked option is rejected without modifying original state
+PASS first letter unlocks the name and saves the evidence once
+PASS unknown choice is rejected
+PASS complete factual route reaches chapter end with four unique clues
+PASS unexplained voice route requires its earlier flag
+PASS factual route cannot claim to have heard a voice
+PASS journal retains most recent 200 entries
+PASS story has unique identifiers and all references are defined
+PASS all story nodes are reachable and no reachable state is stuck
+PASS every flag reference has a known producer
+PASS old first chapter ending now continues to chapter two
+PASS unowned evidence cannot be used for deduction
+PASS deduction rejects wrong pair duplicates extra materials and wrong answer
+PASS deduction accepts either order and repeated confirmation is idempotent
+PASS main ending requires all three findings and final confirmation
+PASS all four endings can be collected and replay preserves findings
+PASS cancel ending choice leaves gallery unchanged
+PASS draft distinguishes unverified claims from established responsibility
+PASS legacy v1 save upgrades without rewriting source or dropping progress
+PASS malformed legacy save and missing gallery in v2 are rejected
+PASS forged findings and invalid gallery ids are rejected
+PASS mock roundtrip restores node clues flags and choice history
+PASS empty storage returns missing and does not write
+PASS malformed JSON is preserved and reported damaged
+PASS unsupported save version is preserved
+PASS unknown node duplicate evidence and unknown flags fail validation
+PASS read failure returns retryable error without rewriting
+PASS write failure propagates and previous saved state remains
+PASS invalid state is never written
+PASS oversized save is rejected without changes
+31/31 passed (host Mock suite)

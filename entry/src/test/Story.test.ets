@@ -1,7 +1,7 @@
 import { describe, it, expect } from '@ohos/hypium';
-import { canChoose, choose, createGame, nodeById, validState } from '../main/ets/engine/StoryEngine';
+import { canChoose, choose, createGame, deduce, letterDraft, nodeById, validState } from '../main/ets/engine/StoryEngine';
 import { GameState } from '../main/ets/model/StoryModels';
-import { EVIDENCE, STORY } from '../main/ets/data/ChapterOne';
+import { DEDUCTIONS, ENDINGS, EVIDENCE, KNOWN_FLAGS, STORY } from '../main/ets/data/StoryData';
 import { SaveRepository, StoragePort } from '../main/ets/storage/SaveRepository';
 
 class MockStorage implements StoragePort {
@@ -32,6 +32,17 @@ function play(ids: string[]): GameState {
 
 const route: string[] = ['enter', 'open_letter', 'follow_photo', 'turn_photo', 'ask_photo',
   'ask_register', 'compare_photo', 'record_facts'];
+
+function fullInvestigation(): GameState {
+  let state = play(route.concat(['meet_shen', 'to_archive', 'door_docs', 'maintenance_back',
+    'photo_docs', 'original_back', 'report_docs', 'aftermath_back']));
+  state = deduce(state, 'identity', ['original', 'clearance'], 'volunteer').state;
+  state = deduce(state, 'cause', ['letter2', 'incident'], 'fault').state;
+  ['confront_shen', 'to_apology', 'read_self', 'to_writing'].forEach(id => {
+    const result = choose(state, id); expect(result.ok).assertTrue(); state = result.state;
+  });
+  return state;
+}
 
 export default function storyTest(): void {
   describe('SeventhLetter engine and mock persistence', () => {
@@ -117,9 +128,123 @@ export default function storyTest(): void {
         const available = nodeById(state.nodeId)!.choices.filter(item => canChoose(state, item));
         expect(available.length > 0).assertTrue();
         available.forEach(item => { queue.push(choose(state, item.id).state); });
-        expect(seen.length < 10000).assertTrue();
+        DEDUCTIONS.forEach(item => {
+          if (!state.flags.includes(item.id)) {
+            const result = deduce(state, item.id, item.evidenceIds, item.answer);
+            if (result.ok) { queue.push(result.state); }
+          }
+        });
+        expect(seen.length < 20000).assertTrue();
       }
       expect(nodes.length).assertEqual(STORY.length);
+    });
+    it('every flag reference has a known producer', 0, () => {
+      STORY.forEach(node => node.choices.forEach(choice => {
+        choice.sets.concat(choice.requiresFlags).forEach(id => { expect(KNOWN_FLAGS.includes(id)).assertTrue(); });
+      }));
+      DEDUCTIONS.forEach(item => { expect(KNOWN_FLAGS.includes(item.id)).assertTrue(); });
+    });
+    it('old first chapter ending now continues to chapter two', 0, () => {
+      const result = choose(play(route), 'meet_shen');
+      expect(result.ok).assertTrue();
+      expect(result.state.nodeId).assertEqual('shen');
+      expect(result.state.evidenceIds.includes('letter3')).assertTrue();
+    });
+    it('unowned evidence cannot be used for deduction', 0, () => {
+      const state = play(route.concat(['meet_shen']));
+      const before = JSON.stringify(state);
+      expect(deduce(state, 'identity', ['original', 'clearance'], 'volunteer').ok).assertFalse();
+      expect(JSON.stringify(state)).assertEqual(before);
+    });
+    it('deduction rejects wrong pair duplicates extra materials and wrong answer', 0, () => {
+      const state = fullInvestigation();
+      expect(deduce(state, 'witness', ['letter6', 'letter5'], 'unchecked').ok).assertFalse();
+      expect(deduce(state, 'witness', ['letter6', 'letter6'], 'unchecked').ok).assertFalse();
+      expect(deduce(state, 'witness', ['letter6', 'recording', 'letter5'], 'unchecked').ok).assertFalse();
+      expect(deduce(state, 'witness', ['letter6', 'recording'], 'certain').ok).assertFalse();
+      expect(state.flags.includes('witness')).assertFalse();
+    });
+    it('deduction accepts either order and repeated confirmation is idempotent', 0, () => {
+      const state = fullInvestigation();
+      const first = deduce(state, 'witness', ['recording', 'letter6'], 'unchecked');
+      const second = deduce(first.state, 'witness', ['letter6', 'recording'], 'unchecked');
+      expect(first.ok && second.ok).assertTrue();
+      expect(second.state.flags.filter(id => id === 'witness').length).assertEqual(1);
+      expect(state.flags.includes('witness')).assertFalse();
+      expect(validState(second.state)).assertTrue();
+    });
+    it('main ending requires all three findings and final confirmation', 0, () => {
+      let state = fullInvestigation();
+      expect(state.evidenceIds.length).assertEqual(EVIDENCE.length);
+      expect(choose(state, 'sign_letter').ok).assertFalse();
+      state = deduce(state, 'witness', ['letter6', 'recording'], 'unchecked').state;
+      const pending = choose(state, 'sign_letter');
+      expect(pending.state.nodeId).assertEqual('confirm_seventh');
+      expect(pending.state.endingIds.length).assertEqual(0);
+      const final = choose(pending.state, 'seal_seventh');
+      expect(final.state.nodeId).assertEqual('ending_seventh');
+      expect(final.state.endingIds.includes('seventh')).assertTrue();
+      expect(validState(final.state)).assertTrue();
+    });
+    it('all four endings can be collected and replay preserves findings', 0, () => {
+      let state = deduce(fullInvestigation(), 'witness', ['letter6', 'recording'], 'unchecked').state;
+      const actions: string[] = ['deny_papers', 'seal_blank', 'reconsider_blank', 'return_papers', 'seal_return',
+        'reconsider_return', 'keep_draft', 'seal_unsent', 'reconsider_unsent', 'sign_letter', 'seal_seventh'];
+      actions.forEach(id => { const result = choose(state, id); expect(result.ok).assertTrue(); state = result.state; });
+      expect(state.endingIds.length).assertEqual(ENDINGS.length);
+      expect(state.flags.includes('witness')).assertTrue();
+      const restarted = createGame(2000, state.endingIds);
+      expect(restarted.evidenceIds.length).assertEqual(0);
+      expect(restarted.history.length).assertEqual(0);
+      expect(restarted.endingIds.length).assertEqual(4);
+      restarted.endingIds.pop();
+      expect(state.endingIds.length).assertEqual(4);
+    });
+    it('cancel ending choice leaves gallery unchanged', 0, () => {
+      let state = fullInvestigation();
+      ['deny_papers', 'cancel_blank', 'return_papers', 'cancel_return', 'keep_draft', 'cancel_unsent'].forEach(id => {
+        const result = choose(state, id); expect(result.ok).assertTrue(); state = result.state;
+      });
+      expect(state.nodeId).assertEqual('writing');
+      expect(state.endingIds.length).assertEqual(0);
+    });
+    it('draft distinguishes unverified claims from established responsibility', 0, () => {
+      const pending = fullInvestigation();
+      expect(letterDraft(pending).includes('我还需要把自己的旧草稿和当晚录音对照')).assertTrue();
+      const checked = deduce(pending, 'witness', ['letter6', 'recording'], 'unchecked').state;
+      expect(letterDraft(checked).includes('这是我的错误')).assertTrue();
+      expect(letterDraft(checked).includes('你在那晚遇难')).assertTrue();
+      expect(letterDraft(checked).includes('我还需要把自己的旧草稿和当晚录音对照')).assertFalse();
+    });
+    it('legacy v1 save upgrades without rewriting source or dropping progress', 0, async () => {
+      const store = new MockStorage();
+      const old = play(route);
+      store.value = JSON.stringify(old).replace('"schemaVersion":2', '"schemaVersion":1').replace(',"endingIds":[]', '');
+      const raw = store.value;
+      const loaded = await new SaveRepository(store).load();
+      expect(loaded.status).assertEqual('ready');
+      expect(loaded.state!.schemaVersion).assertEqual(2);
+      expect(loaded.state!.nodeId).assertEqual('chapter_end');
+      expect(loaded.state!.evidenceIds.length).assertEqual(4);
+      expect(loaded.state!.history.length).assertEqual(old.history.length);
+      expect(loaded.state!.endingIds.length).assertEqual(0);
+      expect(store.value).assertEqual(raw);
+      expect(store.writes).assertEqual(0);
+    });
+    it('malformed legacy save and missing gallery in v2 are rejected', 0, async () => {
+      const store = new MockStorage();
+      store.value = '{"schemaVersion":1,"nodeId":"chapter_end"}';
+      expect((await new SaveRepository(store).load()).status).assertEqual('damaged');
+      store.value = JSON.stringify(createGame()).replace(',"endingIds":[]', '');
+      expect((await new SaveRepository(store).load()).status).assertEqual('damaged');
+    });
+    it('forged findings and invalid gallery ids are rejected', 0, () => {
+      const state = createGame(); state.flags = ['identity'];
+      expect(validState(state)).assertFalse();
+      state.flags = []; state.endingIds = ['unknown'];
+      expect(validState(state)).assertFalse();
+      state.endingIds = ['seventh', 'seventh'];
+      expect(validState(state)).assertFalse();
     });
     it('mock roundtrip restores node clues flags and choice history', 0, async () => {
       const store = new MockStorage();

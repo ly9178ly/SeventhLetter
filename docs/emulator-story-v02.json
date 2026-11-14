@@ -1,0 +1,56 @@
+{
+  "at": "2026-11-14T08:27:12.979206+00:00",
+  "version": "0.2.0",
+  "mechanism": "native hdc/uitest, real Preferences, force-stop and relaunch",
+  "originalAutosaveRestored": true,
+  "results": [
+    {
+      "test": "覆盖安装后可继续原存档，仅读取不覆写旧记录",
+      "result": "PASS"
+    },
+    {
+      "test": "从第一章进入第二章，并在事故通报明确确认林知秋遇难",
+      "result": "PASS"
+    },
+    {
+      "test": "错误组合不解锁；身份与事故原因可用正确组合核对",
+      "result": "PASS"
+    },
+    {
+      "test": "六封信和十三项证据收集齐全，第三章接入写信阶段",
+      "result": "PASS"
+    },
+    {
+      "test": "强制结束后恢复后续章节、六封信和三项推理",
+      "result": "PASS"
+    },
+    {
+      "test": "最终署名前可以取消，不提前解锁结局",
+      "result": "PASS"
+    },
+    {
+      "test": "真实到达结局：第七封信",
+      "result": "PASS"
+    },
+    {
+      "test": "真实到达结局：归还",
+      "result": "PASS"
+    },
+    {
+      "test": "真实到达结局：未寄出",
+      "result": "PASS"
+    },
+    {
+      "test": "真实到达结局：空白收件人",
+      "result": "PASS"
+    },
+    {
+      "test": "图鉴收录四个结局且可回看正文",
+      "result": "PASS"
+    },
+    {
+      "test": "新调查清空进度但保留四个结局",
+      "result": "PASS"
+    }
+  ]
+}
