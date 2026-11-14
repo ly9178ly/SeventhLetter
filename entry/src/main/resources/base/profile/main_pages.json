@@ -3,6 +3,8 @@
     "pages/Index",
     "pages/Investigation",
     "pages/Archive",
-    "pages/Records"
+    "pages/Records",
+    "pages/Deductions",
+    "pages/Endings"
   ]
 }

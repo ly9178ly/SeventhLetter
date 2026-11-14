@@ -1,6 +1,6 @@
 import { Choice, Evidence, StoryNode } from '../model/StoryModels';
 
-function option(id: string, label: string, target: string, grants: string[] = [],
+export function option(id: string, label: string, target: string, grants: string[] = [],
   requires: string[] = [], sets: string[] = [], requiresFlags: string[] = [], hint: string = ''): Choice {
   return { id, label, target, grants, requires, sets, requiresFlags, hint };
 }
@@ -111,8 +111,9 @@ export const STORY: StoryNode[] = [
     paragraphs: ['21:17。墙上的钟向前走了一格。',
       '手机又亮了：「这次，你终于把信留下了。」',
       '桌上多了一只空信封。收件人一栏印着你的名字；寄件人一栏，也是。',
-      '第一章完。调查已保存。后续章节将展开档案室、另外五封信与四个结局。'],
-    choices: [option('revisit', '返回阅览区，复查遗漏的细节', 'reading')]
+      '信封背面夹着一张旧照片的底片。「先别写。」一个女生站在走廊门口，「你还没想起自己坐在哪里。」'],
+    choices: [option('meet_shen', '跟她去档案室，查清照片的来历', 'shen', ['letter3'], [], ['met_shen']),
+      option('revisit', '返回阅览区，复查遗漏的细节', 'reading')]
   }
 ];
 

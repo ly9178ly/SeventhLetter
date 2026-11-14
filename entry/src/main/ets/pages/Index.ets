@@ -29,7 +29,7 @@ struct Index {
     if (this.loading || this.busy) { return; }
     if (this.hasRecord) {
       AlertDialog.show({
-        title: '开始新的调查？', message: '这会替换当前自动存档。已经完成的调查记录也会清空。',
+        title: '开始新的调查？', message: '这会替换当前调查进度与选择记录，已解锁的结局仍会保留。',
         primaryButton: { value: '保留当前调查', action: () => {} },
         secondaryButton: { value: '开始新调查', action: () => { this.startNew(); } }
       });
@@ -39,7 +39,7 @@ struct Index {
   async startNew(): Promise<void> {
     this.busy = true;
     try {
-      const state = createGame();
+      const state = createGame(Date.now(), this.saved?.endingIds ?? []);
       await repository(getContext(this) as common.UIAbilityContext).save(state);
       this.saved = state;
       this.hasRecord = true;
@@ -95,7 +95,10 @@ struct Index {
             .backgroundColor(Ink.surface).fontColor(Ink.text).borderRadius(10)
             .onClick(() => { router.pushUrl({ url: 'pages/Records' }); })
         }.width('100%').margin({ top: 12, bottom: 28 })
-        Text('第一章 · 可玩开发版 0.1\n纯本地运行 · 无需联网').fontSize(10).fontColor(Ink.muted)
+        Button('结局图鉴  ·  ' + (this.saved?.endingIds.length ?? 0) + ' / 4', { type: ButtonType.Normal })
+          .width('100%').height(48).backgroundColor(Ink.surface).fontColor(Ink.gold).borderRadius(10)
+          .margin({ bottom: 22 }).onClick(() => { router.pushUrl({ url: 'pages/Endings' }); })
+        Text('四章完整故事 · 开发版 0.2\n纯本地运行 · 无需联网').fontSize(10).fontColor(Ink.muted)
           .lineHeight(19).textAlign(TextAlign.Center).margin({ bottom: 26 })
       }.padding({ left: 28, right: 28 }).width('100%').constraintSize({ maxWidth: 560 })
     }.width('100%').height('100%').backgroundColor(Ink.background).scrollBar(BarState.Off)

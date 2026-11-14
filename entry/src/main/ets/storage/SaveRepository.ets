@@ -20,11 +20,17 @@ export class SaveRepository {
     try {
       if (raw === '') { return { status: 'missing', state: null, message: '' }; }
       if (raw.length > 150000) { return { status: 'damaged', state: null, message: '存档超过支持的大小，原记录已保留。' }; }
-      const state = JSON.parse(raw) as GameState;
+      let state = JSON.parse(raw) as GameState;
+      let migrated = false;
+      if (state && state.schemaVersion === 1) {
+        state = { schemaVersion: 2, nodeId: state.nodeId, evidenceIds: state.evidenceIds,
+          flags: state.flags, history: state.history, updatedAt: state.updatedAt, endingIds: [] };
+        migrated = true;
+      }
       if (!validState(state)) {
         return { status: 'damaged', state: null, message: '存档内容或版本不受支持，原记录已保留。' };
       }
-      return { status: 'ready', state, message: '' };
+      return { status: 'ready', state, message: migrated ? '第一章旧存档已兼容恢复，继续选择后保存为新版；原进度未清空。' : '' };
     } catch (error) {
       return { status: 'damaged', state: null, message: '存档内容无法解析，原记录已保留。可重试读取或确认后重新开始。' };
     }

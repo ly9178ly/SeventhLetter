@@ -1,6 +1,6 @@
 import { common } from '@kit.AbilityKit';
 import { Evidence } from '../model/StoryModels';
-import { EVIDENCE } from '../data/ChapterOne';
+import { EVIDENCE } from '../data/StoryData';
 import { repository } from '../storage/PreferencesPort';
 import { Ink } from '../components/Theme';
 import { TitleBar } from '../components/TitleBar';
@@ -24,7 +24,7 @@ struct Archive {
       Scroll() {
         Column({ space: 15 }) {
           Row() {
-            Text('本章归档').fontSize(12).fontColor(Ink.muted)
+            Text('调查归档').fontSize(12).fontColor(Ink.muted)
             Blank()
             Text(this.owned.length + ' / ' + EVIDENCE.length).fontSize(26).fontColor(Ink.gold)
           }.width('100%').margin({ top: 6 })

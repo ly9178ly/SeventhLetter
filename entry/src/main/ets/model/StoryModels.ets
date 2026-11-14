@@ -40,6 +40,30 @@ export interface GameState {
   flags: string[];
   history: HistoryEntry[];
   updatedAt: number;
+  endingIds: string[];
+}
+
+export interface Hypothesis {
+  id: string;
+  label: string;
+}
+
+export interface Deduction {
+  id: string;
+  question: string;
+  hint: string;
+  candidates: string[];
+  evidenceIds: string[];
+  hypotheses: Hypothesis[];
+  answer: string;
+  conclusion: string;
+}
+
+export interface Ending {
+  id: string;
+  nodeId: string;
+  title: string;
+  direction: string;
 }
 
 export interface TransitionResult {

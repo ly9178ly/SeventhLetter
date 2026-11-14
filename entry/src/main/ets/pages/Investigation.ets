@@ -1,8 +1,8 @@
 import { common } from '@kit.AbilityKit';
 import { router } from '@kit.ArkUI';
 import { Choice, GameState, StoryNode } from '../model/StoryModels';
-import { canChoose, choose, createGame, nodeById } from '../engine/StoryEngine';
-import { STORY } from '../data/ChapterOne';
+import { canChoose, choose, createGame, letterDraft, nodeById } from '../engine/StoryEngine';
+import { EVIDENCE, ENDINGS, STORY } from '../data/StoryData';
 import { repository } from '../storage/PreferencesPort';
 import { Ink } from '../components/Theme';
 import { TitleBar } from '../components/TitleBar';
@@ -26,7 +26,7 @@ struct Investigation {
       this.game = result.state;
       this.ready = true;
       this.message = '';
-      this.saveMessage = '进度已恢复 · 每次选择后自动保存';
+      this.saveMessage = result.message || '进度已恢复 · 每次选择后自动保存';
     } else { this.message = result.message || '还没有调查存档，请返回主页开始新调查。'; }
   }
 
@@ -66,8 +66,18 @@ struct Investigation {
         Row() {
           Text(this.current().location).fontSize(12).fontColor(Ink.gold)
           Blank()
-          Text('证据 ' + this.game.evidenceIds.length + ' / 4').fontSize(11).fontColor(Ink.muted)
+          Text('证据 ' + this.game.evidenceIds.length + ' / ' + EVIDENCE.length).fontSize(11).fontColor(Ink.muted)
         }.width('100%').padding({ bottom: 16 })
+        if (this.game.flags.includes('met_shen')) {
+          Row({ space: 10 }) {
+            Button('证据推理', { type: ButtonType.Normal }).height(36).layoutWeight(1)
+              .fontSize(12).fontColor(Ink.gold).backgroundColor(Ink.surface).borderRadius(8).enabled(!this.busy)
+              .onClick(() => { router.pushUrl({ url: 'pages/Deductions' }); })
+            Button('结局图鉴', { type: ButtonType.Normal }).height(36).layoutWeight(1)
+              .fontSize(12).fontColor(Ink.muted).backgroundColor(Ink.surface).borderRadius(8).enabled(!this.busy)
+              .onClick(() => { router.pushUrl({ url: 'pages/Endings' }); })
+          }.width('100%').margin({ bottom: 12 })
+        }
         Scroll(this.scroller) {
           Column({ space: 0 }) {
             Text(this.current().chapter).fontSize(11).fontColor(Ink.muted).letterSpacing(2)
@@ -78,6 +88,16 @@ struct Investigation {
               Text(paragraph).fontSize(16).lineHeight(29).fontColor(Ink.text)
                 .width('100%').margin({ bottom: 19 })
             }, (paragraph: string) => paragraph)
+            if (this.game.nodeId === 'writing' || this.game.nodeId === 'confirm_seventh') {
+              Column({ space: 14 }) {
+                Text('第七封信 · 根据已核对的证据生成').fontSize(12).fontColor('#586557').width('100%')
+                Text(letterDraft(this.game)).fontSize(15).fontColor(Ink.paperInk).lineHeight(28).width('100%')
+              }.padding(20).backgroundColor(Ink.paper).borderRadius(5).margin({ top: 10, bottom: 20 })
+            }
+            if (ENDINGS.some(item => item.nodeId === this.game.nodeId)) {
+              Text('已收录结局 ' + this.game.endingIds.length + ' / ' + ENDINGS.length)
+                .fontSize(13).fontColor(Ink.gold).width('100%').margin({ bottom: 12 })
+            }
             Row() {
               Divider().color(Ink.line).layoutWeight(1)
               Text('你决定').fontSize(11).fontColor(Ink.gold).margin({ left: 14, right: 14 })
@@ -92,7 +112,7 @@ struct Investigation {
                       .textAlign(TextAlign.Start).lineHeight(22)
                     Text(canChoose(this.game, choice) ? '→' : '锁定').fontSize(12).fontColor(Ink.muted)
                   }.padding(16).width('100%')
-                }.width('100%').constraintSize({ minHeight: 56 }).backgroundColor(Ink.surface)
+                }.id('choice-' + choice.id).width('100%').constraintSize({ minHeight: 56 }).backgroundColor(Ink.surface)
                   .borderRadius(10).border({ width: 1, color: Ink.line })
                   .enabled(!this.busy && canChoose(this.game, choice))
                   .opacity(canChoose(this.game, choice) ? 1 : 0.5)

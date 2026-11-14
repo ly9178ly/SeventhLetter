@@ -1,6 +1,7 @@
 import { common } from '@kit.AbilityKit';
-import { HistoryEntry } from '../model/StoryModels';
+import { Deduction, HistoryEntry } from '../model/StoryModels';
 import { nodeById } from '../engine/StoryEngine';
+import { DEDUCTIONS } from '../data/StoryData';
 import { repository } from '../storage/PreferencesPort';
 import { Ink } from '../components/Theme';
 import { TitleBar } from '../components/TitleBar';
@@ -11,10 +12,12 @@ struct Records {
   @State entries: HistoryEntry[] = [];
   @State message: string = '正在读取调查记录…';
   @State savedAt: string = '';
+  @State flags: string[] = [];
 
   async aboutToAppear(): Promise<void> {
     const result = await repository(getContext(this) as common.UIAbilityContext).load();
     this.entries = result.state?.history.slice().reverse() ?? [];
+    this.flags = result.state?.flags ?? [];
     this.message = result.message || (this.entries.length === 0 ? '还没有调查记录。开始调查后，你的每一次选择都会留在这里。' : '从最近一次选择开始，回看你留下的路径。');
     this.savedAt = result.state ? new Date(result.state.updatedAt).toLocaleString() : '';
   }
@@ -32,6 +35,9 @@ struct Records {
           if (this.savedAt !== '') {
             Text('最近进度保存于 ' + this.savedAt).fontColor(Ink.gold).fontSize(11).width('100%')
           }
+          ForEach(DEDUCTIONS.filter(item => this.flags.includes(item.id)), (item: Deduction) => {
+            Text('已核对 · ' + item.conclusion).fontSize(13).fontColor(Ink.gold).lineHeight(24).width('100%')
+          }, (item: Deduction) => item.id)
           ForEach(this.entries, (entry: HistoryEntry, index: number) => {
             Row({ space: 15 }) {
               Text(('0' + (this.entries.length - index)).slice(-2)).fontColor(Ink.gold).fontSize(12)
@@ -43,7 +49,7 @@ struct Records {
               }.alignItems(HorizontalAlign.Start).layoutWeight(1)
             }.width('100%').padding(19).backgroundColor(Ink.surface).borderRadius(9)
           }, (entry: HistoryEntry, index: number) => index + ':' + entry.at)
-          Text('最多保留最近200次选择；重开会清空当前调查。').fontSize(10).fontColor(Ink.muted)
+          Text('保留最近200次选择；重开清空调查，保留结局图鉴。').fontSize(10).fontColor(Ink.muted)
             .margin({ top: 10, bottom: 30 })
         }.width('100%')
       }.width('100%').layoutWeight(1).scrollBar(BarState.Off)
